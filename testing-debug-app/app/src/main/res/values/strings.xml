@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Personal Assistant Degug and Testing</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="natural_language">Natural language</string>
+    <string name="actions">Actions</string>
+    <string name="wake_word">Wake Word</string>
+    <string name="speech_recognition">Speech Recognition</string>
+</resources>

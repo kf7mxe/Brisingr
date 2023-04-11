@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_wakeword"
+        android:icon="@drawable/wakeword_icon"
+        android:title="@string/wake_word" />
+
+    <item
+        android:id="@+id/navigation_speech_recognition"
+        android:icon="@drawable/speech_recognition"
+        android:title="@string/speech_recognition" />
+
+    <item
+        android:id="@+id/navigation_natural_language"
+        android:icon="@drawable/natural_language"
+        android:title="@string/natural_language" />
+
+    <item
+        android:id="@+id/navigation_actions"
+        android:icon="@drawable/action_icon"
+        android:title="@string/actions" />
+
+</menu>

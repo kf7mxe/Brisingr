@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@id/wakewordFragment">
+    <fragment
+        android:id="@+id/wakewordFragment"
+        android:name="com.kf7mxe.personalassistantdegugandtesting.ui.wakeword.WakewordFragment"
+        android:label="fragment_wakeword"
+        tools:layout="@layout/fragment_wakeword" />
+    <fragment
+        android:id="@+id/speechRecognitionFragment"
+        android:name="com.kf7mxe.personalassistantdegugandtesting.ui.speechRecognition.SpeechRecognitionFragment"
+        android:label="fragment_speech_recognition"
+        tools:layout="@layout/fragment_speech_recognition" />
+    <fragment
+        android:id="@+id/naturalLanguageFragment"
+        android:name="com.kf7mxe.personalassistantdegugandtesting.ui.naturalLanguage.NaturalLanguageFragment"
+        android:label="fragment_actions"
+        tools:layout="@layout/fragment_actions" />
+    <fragment
+        android:id="@+id/actionsFragment"
+        android:name="com.kf7mxe.personalassistantdegugandtesting.ui.actions.ActionsFragment"
+        android:label="ActionsFragment" />
+</navigation>
