@@ -2,3 +2,6 @@
 /training-data
 .wave
 .npz
+.pth
+.pt
+
