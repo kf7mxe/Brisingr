@@ -3,24 +3,29 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@id/wakewordFragment">
+    app:startDestination="@id/navigation_wakeword">
     <fragment
-        android:id="@+id/wakewordFragment"
-        android:name="com.kf7mxe.personalassistantdegugandtesting.ui.wakeword.WakewordFragment"
+        android:id="@+id/navigation_wakeword"
+        android:name="com.kf7mxe.personalassistantdebugingandtesting.ui.wakeword.WakewordFragment"
         android:label="fragment_wakeword"
         tools:layout="@layout/fragment_wakeword" />
     <fragment
-        android:id="@+id/speechRecognitionFragment"
-        android:name="com.kf7mxe.personalassistantdegugandtesting.ui.speechRecognition.SpeechRecognitionFragment"
+        android:id="@+id/navigation_speech_recognition"
+        android:name="com.kf7mxe.personalassistantdebugingandtesting.ui.speechRecognition.SpeechRecognitionFragment"
         android:label="fragment_speech_recognition"
         tools:layout="@layout/fragment_speech_recognition" />
     <fragment
-        android:id="@+id/naturalLanguageFragment"
-        android:name="com.kf7mxe.personalassistantdegugandtesting.ui.naturalLanguage.NaturalLanguageFragment"
+        android:id="@+id/navigation_natural_language"
+        android:name="com.kf7mxe.personalassistantdebugingandtesting.ui.naturalLanguage.NaturalLanguageFragment"
         android:label="fragment_actions"
-        tools:layout="@layout/fragment_actions" />
+        tools:layout="@layout/fragment_natural_language" />
     <fragment
-        android:id="@+id/actionsFragment"
-        android:name="com.kf7mxe.personalassistantdegugandtesting.ui.actions.ActionsFragment"
-        android:label="ActionsFragment" />
+        android:id="@+id/navigation_actions"
+        android:name="com.kf7mxe.personalassistantdebugingandtesting.ui.actions.ActionsFragment"
+        android:label="ActionsFragment"
+        tools:layout="@layout/fragment_actions"/>
+    <fragment
+        android:id="@+id/textToSpeechFragment"
+        android:name="com.kf7mxe.personalassistantdebugingandtesting.ui.textToSpeech.TextToSpeechFragment"
+        android:label="TextToSpeechFragment" />
 </navigation>

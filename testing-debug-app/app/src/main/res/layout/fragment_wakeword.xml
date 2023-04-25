@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.kf7mxe.personalassistantdegugandtesting.ui.wakeword.WakewordFragment">
+    tools:context="com.kf7mxe.personalassistantdebugingandtesting.ui.wakeword.WakewordFragment">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -24,7 +24,7 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="8dp"
                 android:textAlignment="center"
-                android:textSize="84sp"
+                android:textSize="76sp"
                 android:text="90%"
                 />
             <TextView
@@ -49,7 +49,7 @@
                 android:layout_marginEnd="8dp"
                 android:textAlignment="center"
                 android:text="10%"
-                android:textSize="84sp" />
+                android:textSize="76sp" />
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -71,21 +71,7 @@
         android:layout_height="wrap_content"
         android:textAlignment="center"
         android:textSize="14sp"
-        android:text="Opened "
+        android:text="Null "
         />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textAlignment="center"
-        android:textSize="24sp"
-        android:text="Open Overlap"
-        />
-    <TextView
-        android:id="@+id/openedOverlapStatusTextView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textAlignment="center"
-        android:textSize="14sp"
-        android:text="Opened "
-        />
+
 </LinearLayout>
