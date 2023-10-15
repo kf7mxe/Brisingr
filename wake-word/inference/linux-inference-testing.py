@@ -50,6 +50,8 @@ class Net(nn.Module):
 model = Net()
 
 model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+
+
 model.eval()
 
 sample_rate = 8000
@@ -93,11 +95,15 @@ while stream.is_active():
                                             numcep=16)
 
 
-        x = np.expand_dims(mfcc, axis=0)
-        print(x.shape)
+    
     
         # convert from numpy array to torch tensor
-        x = torch.from_numpy(x)
+        x = torch.from_numpy(mfcc)
+
+        x = x.unsqueeze(1)
+        x = x.unsqueeze(1)
+
+        x = x.type(torch.FloatTensor)
 
         print("stuff")
         print(x.shape)

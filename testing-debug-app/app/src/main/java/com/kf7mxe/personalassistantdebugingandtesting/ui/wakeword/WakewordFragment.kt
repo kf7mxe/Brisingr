@@ -45,6 +45,8 @@ class WakewordFragment : Fragment() {
     private val BUFFER_SIZE = SAMPLE_RATE * SECONDS // 1 seconds buffer
     private val OVERLAP_SIZE = SAMPLE_RATE / 2 // 0.5 seconds overlap
 
+    private val NUMCEP = 32
+
     // Variables
     private var audioThread: Thread? = null
     private var isRecording = false
@@ -163,7 +165,6 @@ class WakewordFragment : Fragment() {
             test_CHANNEL_CONFIG, test_AUDIO_FORMAT) * test_BUFFER_SIZE_FACTOR;
 
 
-
 //        mAudioRecord = AudioRecord(MediaRecorder.AudioSource.DEFAULT, SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT, BUFFER_SIZE)
 //        mAudioRecord?.startRecording()
 
@@ -211,7 +212,6 @@ class WakewordFragment : Fragment() {
                     println(AudioRecord.ERROR_BAD_VALUE)
                 }
 
-                wholeBuffer
 
 
 //                println("time in seconds: ${System.currentTimeMillis() / 1000}")
@@ -219,7 +219,7 @@ class WakewordFragment : Fragment() {
 
                 val features = speechFeatures.mfcc(signal = wholeBuffer,
                     sampleRate = SAMPLE_RATE,
-                    numCep = 16
+                    numCep = NUMCEP
                 )
 
 
@@ -231,6 +231,8 @@ class WakewordFragment : Fragment() {
                 module?.forward(IValue.from(featureTensor))?.let {
                     val outputTensor = it.toTensor()
                     val scores = outputTensor.dataAsFloatArray
+                    println("scores: ${scores}")
+                    println("scores size: ${scores.size}")
                     val maxScore = scores.maxOrNull()
                     val maxScoreIndex = scores.maxOf { it }
                     println("maxScore: ${maxScore}")
