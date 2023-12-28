@@ -114,8 +114,8 @@ print(x_train.shape)
 
 
 # normalize x_train, x_test
-x_train = x_train / 255
-x_test = x_test / 255
+# x_train = x_train / 255
+# x_test = x_test / 255
 
 
 
@@ -280,8 +280,8 @@ correct = 0
 total = 0
 for data in test_loader:
     inputs, labels = data
-    # print("inputs")
-    # print(inputs.shape)
+    print("inputs")
+    print(inputs.shape)
     inputs = inputs.unsqueeze(1)
     inputs = inputs.type(torch.FloatTensor)
     inputs, labels = Variable(inputs), Variable(labels)
@@ -297,20 +297,20 @@ for data in test_loader:
 print('Accuracy of the network on the test images: %d %%' % (100 * correct / total))
 
 # Save the model and plot
-torch.save(model.state_dict(), 'wake-word/model-convolution-{len_mfcc}.ckpt')
+torch.save(model.state_dict(), 'wake-word/model-convolution.ckpt')
 
 # load model
 # model = torch.load('wake-word/model-convolution-{len_mfcc}.ckpt')
 
 # infer on a random input
-x = torch.randn(1, 1, 16, 16, requires_grad=True)
+x = torch.randn(1, 1, 13, 101, requires_grad=True)
 torch_out = model(x)
 
 model.eval()
 
 model_trace_script = torch.jit.trace(model, x)
 model_for_android = optimize_for_mobile(model_trace_script)
-model_for_android._save_for_lite_interpreter("wake-word/model-convolution-{len_mfcc}-android_lite_model.pt1")
+model_for_android._save_for_lite_interpreter('wake-word/model-convolution-'+str(x_train.shape[1])+'-'+str(x_train.shape[2]) + '-android_lite_model.pt1')
 
 
 

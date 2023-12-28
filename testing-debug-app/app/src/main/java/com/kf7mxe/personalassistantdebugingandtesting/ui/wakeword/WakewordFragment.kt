@@ -45,7 +45,12 @@ class WakewordFragment : Fragment() {
     private val BUFFER_SIZE = SAMPLE_RATE * SECONDS // 1 seconds buffer
     private val OVERLAP_SIZE = SAMPLE_RATE / 2 // 0.5 seconds overlap
 
-    private val NUMCEP = 32
+    private val NUMCEP = 13
+    private val WINLEN = NUMCEP / SAMPLE_RATE
+    private val NFILT = 26
+    private val NFFT = 512
+    private val LOWFREQ = 0
+    private val HIGHFREQ = SAMPLE_RATE / 2
 
     // Variables
     private var audioThread: Thread? = null
@@ -93,7 +98,7 @@ class WakewordFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         try {
-            module = LiteModuleLoader.load(assetFilePath("android_lite_model.pt1"))
+            module = LiteModuleLoader.load(assetFilePath("model-convolution-13-101-android_lite_model.pt1"))
 //            module = Module.load(assetFilePath("android_lite_model.pt1"))
         } catch (e: Exception) {
             e.printStackTrace()
@@ -219,10 +224,13 @@ class WakewordFragment : Fragment() {
 
                 val features = speechFeatures.mfcc(signal = wholeBuffer,
                     sampleRate = SAMPLE_RATE,
-                    numCep = NUMCEP
+                    winLen = WINLEN.toFloat(),
+                    numCep = NUMCEP,
+                    nFilt = NFILT,
+                    nfft = NFFT,
+                    lowFreq = LOWFREQ,
+                    highFreq = HIGHFREQ
                 )
-
-
 
                 val longArrayOf = longArrayOf(1,1,features.size.toLong(), features[0].size.toLong())
                 val toByteBuffer = features.flatMap { it.toList() }.map { it.toFloat() }
@@ -234,6 +242,9 @@ class WakewordFragment : Fragment() {
                     println("scores: ${scores}")
                     println("scores size: ${scores.size}")
                     val maxScore = scores.maxOrNull()
+                    // display all the score
+                    println("scores: ${scores[0]} ${scores[1]} }")
+
                     val maxScoreIndex = scores.maxOf { it }
                     println("maxScore: ${maxScore}")
                     println("maxScoreIndex: ${maxScoreIndex}")
