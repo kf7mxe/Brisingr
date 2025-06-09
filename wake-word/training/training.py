@@ -135,20 +135,31 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Create a pytorch dataset
 class HotwordDataset(Dataset):
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        
+    def __init__(self, x_data, y_data):
+        self.x_data = x_data
+        self.y_data = y_data
+
     def __len__(self):
-        return len(self.x)
-    
-    def __getitem__(self, index):
-        return self.x[index], self.y[index]
-    
+        return len(self.x_data)
+
+    def __getitem__(self, idx):
+        # Get the sample and convert to tensor
+        x = torch.FloatTensor(self.x_data[idx])
+        # Add channel dimension
+        x = x.unsqueeze(0)  # Shape becomes (1, 16, 16)
+        y = torch.FloatTensor([self.y_data[idx]])
+        return x, y
+
 # Create a pytorch dataloader
 def get_dataloader(x, y, batch_size):
     dataset = HotwordDataset(x, y)
-    return DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    # Custom collate function to handle input shapes
+    def collate_fn(batch):
+        inputs = torch.stack([item[0] for item in batch])  # Stack inputs
+        labels = torch.stack([item[1] for item in batch])  # Stack labels
+        return inputs, labels
+    
+    return DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
 
 batch_size = 3
 # batch_size = 1
@@ -162,155 +173,161 @@ if counts[0] > counts[1]:
 else:
     largest_count = counts[1]
 
+# count of each classes
+print("count of each classes")
+print(counts)
+
 # calculate the accuracy if we always predict the largest count label
 print("accuracy if we always predict the largest count label")
 print(largest_count / len(y_train))
 
-
-
-
-
+# Create train, validation, and test loaders
 train_loader = get_dataloader(x_train, y_train, batch_size)
-test_loader = get_dataloader(x_test, y_test, 1)
+val_loader = get_dataloader(x_val, y_val, batch_size)
+test_loader = get_dataloader(x_test, y_test, batch_size)
 
 
 
 input_size = x_train.shape[1]
 
 class Net(nn.Module):
-    def __init__(self):   
+    def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(1, input_size, kernel_size=3, stride=1, padding=1) # 16, 16, 16
-        self.convnorm1 = nn.BatchNorm2d(input_size)
-        self.pool1 = nn.MaxPool2d(kernel_size=2) # 16, 8, 8
-        self.conv2 = nn.Conv2d(input_size, 32, kernel_size=3, stride=1, padding=1) # 32, 8, 8
-        self.convnorm2 = nn.BatchNorm2d(32)
-        self.pool2 = nn.AvgPool2d(kernel_size=2) # 32, 4, 4
-        self.linear1 = nn.Linear(2400, 400) # 32*4*4, 400
-        self.linear1_bn = nn.BatchNorm1d(400)
+        # Input shape is (batch_size, 256) after flattening
+        self.linear1 = nn.Linear(256, 128)
+        self.linear1_bn = nn.BatchNorm1d(128)
         self.drop = nn.Dropout(0.1)
-        self.linear2 = nn.Linear(400, 2) # 400, 2
+        self.linear2 = nn.Linear(128, 1)  # Binary classification
+        self.linear1_bn = nn.BatchNorm1d(128)
+        self.drop = nn.Dropout(0.1)
+        self.linear2 = nn.Linear(128, 1)  # Binary classification
         
     def forward(self, x):
-
-        x = self.conv1(x)
-        x = self.convnorm1(x)
-        x = F.relu(x)
-        x = self.pool1(x)
-        x = self.conv2(x)
-        x = self.convnorm2(x)
-        x = F.relu(x)
-        x = self.pool2(x)
-        x = x.view(x.size(0), -1)
+        # Input shape should be (batch_size, 1, 16, 16)
+        x = x.view(x.size(0), -1)  # Flatten to (batch_size, 256)
         x = self.linear1(x)
+        x = self.linear1_bn(x)
         x = F.relu(x)
-        x = self.linear1_bn(x) 
         x = self.drop(x)
         x = self.linear2(x)
-        return F.log_softmax(x, dim=1)
+        return torch.sigmoid(x)  # Binary classification needs sigmoid at the end
 
 
     
-model = Net().to(device)
+input_size = x_train.shape[1]
+model = Net()
+model = model.to(device)
+
+# Print model summary to verify input dimensions
+print("Model Summary:")
+# print(model)
+
+# Test input tensor shape
+batch_size = 3
+x_test = torch.randn(batch_size, 1, input_size, input_size).to(device)
+print("\nTest input shape:", x_test.shape)
+
+# Forward pass to verify output shape
+with torch.no_grad():
+    test_output = model(x_test)
+    print("Test output shape:", test_output.shape)
+
 optimizer = optim.AdamW(model.parameters(), lr=0.001)
-criterion = nn.NLLLoss()
+criterion = nn.BCELoss()
 
 
 # print input size and output sizes of the model
 
 
 # Training loop
-for epoch in range(1):
-    train_loss = 0
-    for i, data in enumerate(train_loader):
-        inputs, labels = data
-
-        # unsqueeze the inputs to add a channel dimension
-        inputs = inputs.unsqueeze(1)
-
-        # convert to FloatTensor 
-        inputs = inputs.type(torch.FloatTensor)
-
-        inputs, labels = Variable(inputs), Variable(labels)
- 
-        # print("inputs")
-        # print(inputs.shape)
-        optimizer.zero_grad()
-        # print("input size")
-        # print(inputs.shape)
-
+epochs = 1
+for epoch in range(epochs):
+    running_loss = 0.0
+    for i, (inputs, labels) in enumerate(train_loader):
+        # Skip if batch size is not as expected
         if inputs.shape[0] != batch_size:
-            break
-
+            continue
+            
+        inputs, labels = inputs.to(device), labels.to(device)
+        
+        # Forward pass
         outputs = model(inputs)
-        loss = criterion(outputs, labels.long())
-        # print("right here test")
-        # print(loss.data)
-        # print(loss.item())
-        # train_loss += loss.data[0]
-        train_loss += loss.item()
+        # BCELoss requires float targets
+        loss = criterion(outputs, labels.float())
+        
+        # Backward pass and optimize
+        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-    print('epoch: {}, Loss: {:.4f}'.format(epoch+1, train_loss / len(train_loader)))
-    # print accuracy on test set
+        
+        running_loss += loss.item()
+    
+    print('epoch: {}, Loss: {:.4f}'.format(epoch+1, running_loss / len(train_loader)))
+    
+    # Validation
     model.eval()
+    val_loss = 0.0
     correct = 0
     total = 0
-    for data in test_loader:
-        inputs, labels = data
-        # print("inputs")
-        # print(inputs.shape)
-        inputs = inputs.unsqueeze(1)
-        inputs = inputs.type(torch.FloatTensor)
-        inputs, labels = Variable(inputs), Variable(labels)
-        # print("in the test loop")
-        # print(inputs.shape)
-        outputs = model(inputs)
-        # print("test output")
-        # print(outputs.shape)
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels.long()).sum()
-
-    print('Accuracy of the network on the test images: %d %%' % (100 * correct / total))
+    with torch.no_grad():
+        for inputs, labels in val_loader:
+            if inputs.shape[0] != batch_size:
+                continue
+            
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = model(inputs)
+            loss = criterion(outputs, labels.float())
+            val_loss += loss.item()
+            
+            # Convert sigmoid output to binary prediction
+            predicted = (outputs > 0.5).float()
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+    
+    print('Validation Loss: {:.4f}, Accuracy: {:.2f}%'.format(
+        val_loss / len(val_loader), 100 * correct / total))
+    
+    # Switch back to training mode
+    model.train()
 
 # Test the model
 model.eval()
+test_loss = 0.0
 correct = 0
 total = 0
-for data in test_loader:
-    inputs, labels = data
-    print("inputs")
-    print(inputs.shape)
-    inputs = inputs.unsqueeze(1)
-    inputs = inputs.type(torch.FloatTensor)
-    inputs, labels = Variable(inputs), Variable(labels)
-    # print("in the test loop")
-    # print(inputs.shape)
-    outputs = model(inputs)
-    # print("test output")
-    # print(outputs.shape)
-    _, predicted = torch.max(outputs.data, 1)
-    total += labels.size(0)
-    correct += (predicted == labels.long()).sum()
+with torch.no_grad():
+    for inputs, labels in test_loader:
+        if inputs.shape[0] != batch_size:
+            continue
+            
+        inputs, labels = inputs.to(device), labels.to(device)
+        outputs = model(inputs)
+        loss = criterion(outputs, labels.float())
+        test_loss += loss.item()
+        
+        # Convert sigmoid output to binary prediction
+        predicted = (outputs > 0.5).float()
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
 
-print('Accuracy of the network on the test images: %d %%' % (100 * correct / total))
+print('Test Loss: {:.4f}, Accuracy: {:.2f}%'.format(
+    test_loss / len(test_loader), 100 * correct / total))
 
 # Save the model and plot
-torch.save(model.state_dict(), 'wake-word/model-convolution.ckpt')
+torch.save(model.state_dict(), '/home/trax/Projects/Brisingr/wake-word/model-convolution.ckpt')
 
 # load model
 # model = torch.load('wake-word/model-convolution-{len_mfcc}.ckpt')
 
 # infer on a random input
-x = torch.randn(1, 1, 13, 101, requires_grad=True)
+x = torch.randn(1, 1, 16, 16, requires_grad=True)
 torch_out = model(x)
 
 model.eval()
 
 model_trace_script = torch.jit.trace(model, x)
 model_for_android = optimize_for_mobile(model_trace_script)
-model_for_android._save_for_lite_interpreter('wake-word/model-convolution-'+str(x_train.shape[1])+'-'+str(x_train.shape[2]) + '-android_lite_model.pt1')
+model_for_android._save_for_lite_interpreter('/home/trax/Projects/Brisingr/wake-word/model-convolution-'+str(x_train.shape[1])+'-'+str(x_train.shape[2]) + '-android_lite_model.pt1')
 
 
 
@@ -354,7 +371,7 @@ for epoch in range(1):
  
         optimizer.zero_grad()
         outputs = simple_model(inputs)
-        loss = criterion(outputs, labels.long())
+        loss = criterion(outputs, labels.float())
         train_loss += loss.item()
         loss.backward()
         optimizer.step()
@@ -366,24 +383,27 @@ correct = 0
 total = 0
 for data in test_loader:
     inputs, labels = data
-    print("inputs")
-    print(inputs.shape)
+    # print("inputs")
+    # print(inputs.shape)
     inputs = inputs.unsqueeze(1)
     inputs = inputs.type(torch.FloatTensor)
     inputs, labels = Variable(inputs), Variable(labels)
-    print("in the test loop")
-    print(inputs.shape)
+    # print("in the test loop")
+    # print(inputs.shape)
     outputs = simple_model(inputs)
-    print("test output")
-    print(outputs.shape)
-    print(outputs.data)
+    # print("test output")
+    # print(outputs.shape)
+    # print(outputs.data)
     _, predicted = torch.max(outputs.data, 1)
     total += labels.size(0)
+
     correct += (predicted == labels.long()).sum()
 
+print("Correct: ", correct)
+print("Total: ", total)
 print('Accuracy of the network on the test images: %d %%' % (100 * correct / total))
 
 # Save the model and plot
-torch.save(simple_model.state_dict(), 'wake-word/simple-model-{len_mfcc}.ckpt')
+torch.save(simple_model.state_dict(), '/home/trax/Projects/Brisingr/wake-word/simple-model-{len_mfcc}.ckpt')
 
 

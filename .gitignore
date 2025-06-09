@@ -34,4 +34,5 @@ split_common_voice/
 /shelf/
 /workspace.xml
 
+venv/
 
