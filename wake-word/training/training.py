@@ -240,7 +240,7 @@ criterion = nn.BCELoss()
 
 
 # Training loop
-epochs = 1
+epochs = 10
 for epoch in range(epochs):
     running_loss = 0.0
     for i, (inputs, labels) in enumerate(train_loader):

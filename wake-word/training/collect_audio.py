@@ -134,7 +134,7 @@ if __name__ == "__main__":
         if args.interactive_save_path is None:
             raise Exception('need to set --interactive_save_path')
         interactive(args)
-    else:
+    else:allSubFolderSplitDirectories
         if args.save_path is None:
             raise Exception('need to set --save_path')
         main(args)

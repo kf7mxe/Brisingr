@@ -1,49 +1,35 @@
-from os import listdir
-from os.path import isdir, join
-import os
 import numpy as np
-
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from pathlib import Path
-import python_speech_features
 import sounddevice as sd
 import queue
-import librosa
+import python_speech_features
 import wavio
-# load the pytorch model for making a hotword or wakeword detector in the directory /wake-word named model.pth
+import os
+import librosa
 
+# Constants
+MODEL_PATH = 'wake-word/model-convolution-16-16-android_lite_model.pt1'
+SAMPLE_RATE = 8000
+sample_rate = SAMPLE_RATE  # For compatibility with existing code
+CHUNK_SIZE = 1024
+CHANNELS = 1
+BUFFER_SIZE = SAMPLE_RATE  # 1 second buffer
+MFCC_WINLEN = 0.025  # 25ms window length
+MFCC_WINSTEP = 0.01  # 10ms window step
+MFCC_NUMCEP = 13     # Number of cepstral coefficients
+MFCC_NFILT = 26     # Number of filters
+MFCC_NFFT = 512     # FFT size
+MFCC_LOWFREQ = 0    # Low frequency cutoff
+MFCC_HIGHFREQ = None  # High frequency cutoff
+MFCC_PREEMPH = 0.97  # Pre-emphasis coefficient
 
-width_size = "16"
-height_size = "16"
+# Load model
+model = torch.jit.load(MODEL_PATH)
+model.eval()  # Set model to evaluation mode
 
-model_path = os.getcwd() + '/wake-word/model-convolution-'+width_size+'-'+height_size+'-android_lite_model.pt1'
-print("model_path")
-print(model_path)
-
-input_size = 13
-
-
-
-# load the jit model
-model = torch.jit.load(model_path)
-
-seconds = 1
-sample_rate = 8000
-num_mfcc = 20 * seconds
-winlen = num_mfcc / sample_rate
-chunk_size = 1024
-channels = 1
-
-# buffer size for 1 second of audio
-full_buffer_size = sample_rate
-
-# get data from the microphone every 0.5 seconds and put the data in a the full_buffer array putting the most recent data at the end of the array
-full_buffer = np.zeros(full_buffer_size, dtype=np.float32)
+# Initialize buffer
+full_buffer = np.zeros(BUFFER_SIZE, dtype=np.float32)
 buffer_index = 0
-
-# Create a queue to store audio chunks
 audio_queue = queue.Queue()
 
 def callback(indata, frames, time, status):
@@ -53,98 +39,73 @@ def callback(indata, frames, time, status):
 
 # Start recording stream
 stream = sd.InputStream(
-    samplerate=sample_rate,
-    channels=channels,
+    samplerate=SAMPLE_RATE,
+    channels=CHANNELS,
     dtype='float32',
     callback=callback,
-    blocksize=chunk_size
+    blocksize=CHUNK_SIZE
 )
 
 with stream:
-    while stream.active:
-        # shift the buffer down and new data in
+    while True:
+        # Get new audio chunk
         audio_data = audio_queue.get()
-        audio_data = audio_data.squeeze()  # Remove extra dimension if present
+        audio_data = audio_data.squeeze()
         
-        # Handle circular buffer wrap-around
-        if buffer_index + chunk_size <= full_buffer_size:
-            # Normal case: write directly
-            full_buffer[buffer_index:buffer_index + chunk_size] = audio_data
+        # Update circular buffer
+        if buffer_index + CHUNK_SIZE <= BUFFER_SIZE:
+            full_buffer[buffer_index:buffer_index + CHUNK_SIZE] = audio_data
         else:
-            # Wrap-around case: split the write into two parts
-            split_point = full_buffer_size - buffer_index
+            split_point = BUFFER_SIZE - buffer_index
             full_buffer[buffer_index:] = audio_data[:split_point]
-            full_buffer[:chunk_size - split_point] = audio_data[split_point:]
+            full_buffer[:CHUNK_SIZE - split_point] = audio_data[split_point:]
             
-        buffer_index = (buffer_index + chunk_size) % full_buffer_size
+        buffer_index = (buffer_index + CHUNK_SIZE) % BUFFER_SIZE
+
+        # Process audio in memory
+        mfcc = python_speech_features.mfcc(
+            full_buffer,
+            samplerate=SAMPLE_RATE,
+            winlen=MFCC_WINLEN,
+            winstep=MFCC_WINSTEP,
+            numcep=MFCC_NUMCEP,
+            nfilt=MFCC_NFILT,
+            nfft=MFCC_NFFT,
+            lowfreq=MFCC_LOWFREQ,
+            highfreq=MFCC_HIGHFREQ,
+            preemph=MFCC_PREEMPH
+        )
         
-        # Print buffer index and chunk position for debugging
-        # print(f"Buffer index: {buffer_index}, chunk position: {buffer_index + chunk_size}")
-
-        # print out the full_buffer size
-        # print("full_buffer.shape")
-        # print(full_buffer.shape)
-
-
-        # save buffer to a file to wav file for debugging
-        wavio.write("buffer.wav", full_buffer, sample_rate, sampwidth=2)
-
-
-        # read buffer.wav file
-        path = os.path.abspath(os.path.join(os.getcwd(), 'buffer.wav'))
-        # print("does the path exist")
-        # print(os.path.exists(path))
-        signal, file_sample_rate = librosa.load(path, sr=sample_rate)
-      
-
-
-
-
-        mfcc = python_speech_features.base.mfcc(signal,samplerate=sample_rate,
-                                             winlen=winlen,
-                                            numcep=13,
-                                            nfilt=26,
-                                            nfft=512,
-                                            lowfreq=0,
-                                            highfreq=sample_rate/2)
+        # Normalize MFCC features
+        mfcc = (mfcc - np.mean(mfcc)) / (np.std(mfcc) + 1e-8)
         
-        # print("mfcc.shape")
-        # print(mfcc.shape)
-
-
-        # convert from numpy array to torch tensor
-        x = torch.from_numpy(mfcc)
-
-        # Reshape to match expected input shape (1, 16, 16)
-        x = x[:16, :16]  # Take first 16x16 features
-        x = x.unsqueeze(0)  # Add batch dimension
-        x = x.unsqueeze(0)  # Add channel dimension
+        # Prepare input tensor
+        input_tensor = torch.tensor(mfcc, dtype=torch.float32)
+        input_tensor = input_tensor.unsqueeze(0)
+        input_tensor = input_tensor.unsqueeze(0)  # Add channel dimension
         
         # Convert to float tensor
-        x = x.type(torch.FloatTensor)
+        input_tensor = input_tensor.type(torch.FloatTensor)
 
-        # Print tensor shape for debugging
-        # print("Input tensor shape:", x.shape)
-
-        # import matplotlib.pyplot as plt
-        # # save the mfcc to 
-        # fig = plt.figure()
-        # plt.imshow(x.squeeze(), cmap='hot', interpolation='nearest')
-
-        # print("stuff")
-        # print(x.shape)
-
-        # # run the model on the buffer
-        output = model(x)
-        # print("Output")
-        # print(output)
-    
-        # # if the model found the wake word][])
-        # print("Percentage:", output[0][0].item())
+        # Run inference
+        with torch.no_grad():
+            output = model(input_tensor)
+            
+        # Get prediction
+        prediction = torch.argmax(output, dim=1)
+        
+        # Print result
+        print("output ", output[0][0].item())
         if output[0][0] > 0.5:
-            print("Percentage ", output[0][0].item())
-            print("Wake word detected")
-        #     # extract the 1 second of audio that contains thewake  word
+            print("Wake word detected!")
+        
+        # Print result
+        if prediction.item() == 1:
+            print("Wake word detected!")
+            print("Confidence: ", output[0][0].item())
+
+        # Save buffer to file for debugging
+        wavio.write("buffer.wav", full_buffer, SAMPLE_RATE, sampwidth=2)
         #     start = full_buffer_size - buffer_size
         #     stop = start + full_buffer_size
         #     wake_word_audio = full_buffer[start:stop]

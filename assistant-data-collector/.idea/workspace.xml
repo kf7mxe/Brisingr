@@ -10,54 +10,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="41c85cab-4848-4dd0-8068-6ec10a2d6fcc" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/SplitNoiseCollection.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/SplitNoiseRecordingCardViewHolder.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/SplitNoiseRecordingRecyclerViewAdapter.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/SplitWavFile.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/SplitWholeNoiseCollection.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/SplitWholeRecordingCardViewHolder.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/SplitWholeRecordingRecyclerViewAdapter.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/UnsplitNoiseCollection.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/UnsplitNoiseRecordingCardViewHolder.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/UnsplitNoiseRecordingRecyclerViewAdapter.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/ViewPagerAdapter.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/WavRecord.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/wakeWord/WakeWordRecordingCardViewHolder.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/wakeWord/WakeWordRecordingRecyclerViewAdapter.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/wakeWord/WavRecordOneSecond.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/baseline_delete_24.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/baseline_hearing_24.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/baseline_play_circle_24.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/baseline_stop_24.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/baseline_volume_up_24.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/record.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_split_noise_collection.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_split_whole_noise_collection.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_unsplit_noise_collection.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/unsplit_noise_recording_card.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/wake_word_recording_card.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../mfcc.png" beforeDir="false" afterPath="$PROJECT_DIR$/../mfcc.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../model.pth" beforeDir="false" afterPath="$PROJECT_DIR$/../model.pth" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../testing-debug-app/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../testing-debug-app/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../testing-debug-app/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../testing-debug-app/.idea/gradle.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../testing-debug-app/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../testing-debug-app/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../testing-debug-app/app/src/main/java/com/kf7mxe/personalassistantdebugingandtesting/ui/wakeword/WakewordFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../testing-debug-app/app/src/main/java/com/kf7mxe/personalassistantdebugingandtesting/ui/wakeword/WakewordFragment.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/deploymentTargetDropDown.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deploymentTargetDropDown.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/kotlinc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/kotlinc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/UnsplitNoiseCollection.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/UnsplitNoiseCollection.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local.properties" beforeDir="false" afterPath="$PROJECT_DIR$/local.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../mfcc-inference-record.png" beforeDir="false" afterPath="$PROJECT_DIR$/../mfcc-inference-record.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../wake-word/inference/linux-inference-testing.py" beforeDir="false" afterPath="$PROJECT_DIR$/../wake-word/inference/linux-inference-testing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../wake-word/model.pth" beforeDir="false" afterPath="$PROJECT_DIR$/../wake-word/model.pth" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../wake-word/training/generate_training_data.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../wake-word/training/mfcc.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../wake-word/training/preproccessing.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../wake-word/training/training-data/brisingr/1 (2).wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../wake-word/training/training-data/brisingr/1.wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../wake-word/training/training-data/brisingr/2 (1).wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../wake-word/training/training-data/brisingr/2 (2).wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../wake-word/training/training-data/brisingr/2.wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../wake-word/training/training-data/noise/0_wake-word-noise-2.wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../wake-word/training/training-data/noise/0_wake-word-noise.wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../wake-word/training/training-data/noise/1_wake-word-noise-2.wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../wake-word/training/training-data/noise/1_wake-word-noise.wav" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../wake-word/training/training-data/noise/2_wake-word-noise.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../wake-word/model-convolution-13-101-android_lite_model.pt1" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../wake-word/model-convolution-{len_mfcc}-android_lite_model.pt1" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../wake-word/training/collect_audio.py" beforeDir="false" afterPath="$PROJECT_DIR$/../wake-word/training/collect_audio.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../wake-word/training/training.py" beforeDir="false" afterPath="$PROJECT_DIR$/../wake-word/training/training.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -65,7 +30,10 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[/home/kf7mxe/.android/avd/Pixel_4_API_30.avd]" />
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[DeviceId(pluginId=LocalEmulator, isTemplate=false, identifier=path=/home/trax/.android/avd/Pixel_7_API_34.avd)]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -74,12 +42,36 @@
   <component name="ExternalProjectsManager">
     <system id="GRADLE">
       <state>
+        <task path="$PROJECT_DIR$">
+          <activation />
+        </task>
+        <task path="$PROJECT_DIR$/app">
+          <activation />
+        </task>
         <projects_view>
           <tree_state>
             <expand>
               <path>
                 <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
-                <item name="Assistant Data Collections" type="f1a62948:ProjectNode" />
+                <item name="assistantdatacollections" type="f1a62948:ProjectNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="assistantdatacollections" type="f1a62948:ProjectNode" />
+                <item name="app" type="2d1252cf:ModuleNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="assistantdatacollections" type="f1a62948:ProjectNode" />
+                <item name="app" type="2d1252cf:ModuleNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="assistantdatacollections" type="f1a62948:ProjectNode" />
+                <item name="app" type="2d1252cf:ModuleNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+                <item name="other" type="c8890929:TasksNode$1" />
               </path>
             </expand>
             <select />
@@ -103,24 +95,28 @@
   &quot;associatedIndex&quot;: 7
 }</component>
   <component name="ProjectId" id="2PULFJ0KOvPD4fqH1nvntJJMY0O" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;Android App.app.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/kf7mxe/Downloads&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/media/trax/Elements/machine-learning/training-data/Brisingr wakeword/negative&quot;,
     &quot;live.layout.inspector.capturing&quot;: &quot;false&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.17&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.12531328&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;android.project.structure&quot;
+    &quot;settings.editor.selected.configurable&quot;: &quot;experimental&quot;
   }
 }</component>
   <component name="PsdUISettings">
@@ -145,7 +141,8 @@
   </component>
   <component name="RunManager">
     <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App">
-      <module name="Assistant_Data_Collections.app.main" />
+      <module name="assistantdatacollections.app" />
+      <option name="ANDROID_RUN_CONFIGURATION_SCHEMA_VERSION" value="1" />
       <option name="DEPLOY" value="true" />
       <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
       <option name="DEPLOY_AS_INSTANT" value="false" />
@@ -153,18 +150,51 @@
       <option name="PM_INSTALL_OPTIONS" value="" />
       <option name="ALL_USERS" value="false" />
       <option name="ALWAYS_INSTALL_WITH_PM" value="false" />
+      <option name="ALLOW_ASSUME_VERIFIED" value="false" />
       <option name="CLEAR_APP_STORAGE" value="false" />
+      <option name="DYNAMIC_FEATURES_DISABLED_LIST" value="" />
       <option name="ACTIVITY_EXTRA_FLAGS" value="" />
       <option name="MODE" value="default_activity" />
+      <option name="RESTORE_ENABLED" value="false" />
+      <option name="RESTORE_FILE" value="" />
+      <option name="RESTORE_FRESH_INSTALL_ONLY" value="false" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
-      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
-      <option name="DEBUGGER_TYPE" value="Java" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
+      <option name="DEBUGGER_TYPE" value="Auto" />
+      <Auto>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Auto>
+      <Hybrid>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Hybrid>
       <Java>
         <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
         <option name="DEBUG_SANDBOX_SDK" value="false" />
       </Java>
+      <Native>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Native>
       <Profilers>
         <option name="ADVANCED_PROFILING_ENABLED" value="false" />
         <option name="STARTUP_PROFILING_ENABLED" value="false" />
@@ -174,6 +204,7 @@
         <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
       </Profilers>
       <option name="DEEP_LINK" value="" />
+      <option name="ACTIVITY" value="" />
       <option name="ACTIVITY_CLASS" value="" />
       <option name="SEARCH_ACTIVITY_IN_GLOBAL_SCOPE" value="false" />
       <option name="SKIP_ACTIVITY_VALIDATION" value="false" />
@@ -181,6 +212,26 @@
         <option name="Android.Gradle.BeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="assistant-data-collector" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="assistant-data-collector" />
+      <option name="filePath" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="jdk-11.0.22-corretto-11.0.22-4caba194b151-bfa3237e" />
+      </set>
+    </attachedChunks>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -226,11 +277,6 @@
           <url>file://$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/SplitWholeNoiseCollection.kt</url>
           <line>73</line>
           <option name="timeStamp" value="22" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/app/src/main/java/com/kf7mxe/assistantdatacollections/ui/noiseCollection/UnsplitNoiseCollection.kt</url>
-          <line>95</line>
-          <option name="timeStamp" value="23" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

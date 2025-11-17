@@ -95,7 +95,9 @@ class UnsplitNoiseCollection : Fragment() {
         // remove file if there is a directory in the split folder with the same name
         for (i in allSubFolderSplitDirectories.indices) {
             for (j in recordingFiles.indices) {
-                if (recordingFiles.size >= (j+1)) {
+
+                if (recordingFiles.size < j) {
+
                     if (allSubFolderSplitDirectories[i] == recordingFiles[j].replace(".wav", "")) {
                         recordingFiles.removeAt(j)
                     }
