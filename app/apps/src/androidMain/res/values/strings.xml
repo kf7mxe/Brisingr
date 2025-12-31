@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Brisingr</string>
+    <string name="assistant_name">Brisingr Assistant</string>
+    <string name="assistant_settings">Assistant Settings</string>
+    <string name="enable_assistant">Enable as Digital Assistant</string>
+    <string name="assistant_description">Allow Brisingr to handle voice commands and assist with tasks</string>
+</resources>
