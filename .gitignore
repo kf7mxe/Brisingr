@@ -1,4 +1,4 @@
-build/
+*/build/
 training-data/
 *.wave
 *.wav
