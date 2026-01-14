@@ -7,6 +7,8 @@ import time
 from collections import deque
 import gc
 import os
+from datetime import datetime, timezone
+
 
 class SileroVAD:
     """Silero VAD integration with more lenient settings"""
@@ -238,39 +240,39 @@ class FixedEnhancedWakeWordDetector:
         return model
     
     def should_process_audio(self, audio_signal):
-        """Much more lenient audio filtering"""
-        self.stats['total_chunks'] += 1
+        # """Much more lenient audio filtering"""
+        # self.stats['total_chunks'] += 1
         
-        # Stage 1: Very lenient volume check
-        volume_analysis = self.volume_detector.analyze_audio_quality(audio_signal)
+        # # Stage 1: Very lenient volume check
+        # volume_analysis = self.volume_detector.analyze_audio_quality(audio_signal)
         
-        if not volume_analysis['should_process']:
-            self.stats['filtered_volume'] += 1
-            # Only skip if volume is REALLY low
-            if volume_analysis['rms_volume'] < 0.0005:  # Very low threshold
-                return False, f"volume_too_low_{volume_analysis['rms_volume']:.6f}"
+        # if not volume_analysis['should_process']:
+        #     self.stats['filtered_volume'] += 1
+        #     # Only skip if volume is REALLY low
+        #     if volume_analysis['rms_volume'] < 0.0005:  # Very low threshold
+        #         return False, f"volume_too_low_{volume_analysis['rms_volume']:.6f}"
         
-        # Stage 2: Lenient VAD check (only if enabled and working)
-        if self.use_vad and self.vad and self.vad.model is not None:
-            try:
-                is_speech, vad_prob = self.vad.detect_speech(audio_signal[-1024:])  # Use last 1024 samples
+        # # Stage 2: Lenient VAD check (only if enabled and working)
+        # if self.use_vad and self.vad and self.vad.model is not None:
+        #     try:
+        #         is_speech, vad_prob = self.vad.detect_speech(audio_signal[-1024:])  # Use last 1024 samples
                 
-                if not is_speech and vad_prob < 0.1:  # Only skip if VAD is very confident it's not speech
-                    self.stats['filtered_vad'] += 1
-                    return False, f"no_speech_vad_{vad_prob:.3f}"
-            except:
-                # If VAD fails, don't filter - process anyway
-                pass
+        #         if not is_speech and vad_prob < 0.1:  # Only skip if VAD is very confident it's not speech
+        #             self.stats['filtered_vad'] += 1
+        #             return False, f"no_speech_vad_{vad_prob:.3f}"
+        #     except:
+        #         # If VAD fails, don't filter - process anyway
+        #         pass
         
-        # Stage 3: Minimal adaptive skipping
-        if volume_analysis['rms_volume'] < 0.001:  # Only for very quiet audio
-            self.skip_counter += 1
-            if self.skip_counter < self.skip_threshold:
-                return False, "adaptive_skip"
-            else:
-                self.skip_counter = 0
-        else:
-            self.skip_counter = 0
+        # # Stage 3: Minimal adaptive skipping
+        # if volume_analysis['rms_volume'] < 0.001:  # Only for very quiet audio
+        #     self.skip_counter += 1
+        #     if self.skip_counter < self.skip_threshold:
+        #         return False, "adaptive_skip"
+        #     else:
+        #         self.skip_counter = 0
+        # else:
+        #     self.skip_counter = 0
         
         return True, "processing"
     
@@ -300,6 +302,25 @@ class FixedEnhancedWakeWordDetector:
                 fmin=80,
                 fmax=8000
             )
+
+            mfcc_min = mfccs.min()
+            mfcc_max = mfccs.max()
+            mfcc_mean = mfccs.mean()
+            first_frame = mfccs[0][:5]
+            
+
+            audio_min = audio_signal.min()
+            audio_max = audio_signal.max()
+            audio_rms = np.sqrt(np.mean(audio_signal ** 2))
+            now_utc = datetime.now(timezone.utc)
+            timeFormated = now_utc.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            print("=== MFCC Debug (Python/Linux) ===")
+            print(f"Timestamp: {timeFormated}")
+            print(f"Audio: min={audio_min:.4f}, max={audio_max:.4f}, rms={audio_rms:.4f}")
+            print(f"MFCC: frames={len(mfccs)}, min={mfcc_min:.2f}, max={mfcc_max:.2f}, mean={mfcc_mean:.2f}")
+            print(f"MFCC first frame (c0-c4): {[f'{x:.2f}' for x in first_frame]}")
+
+
             
             return mfccs.T
             
@@ -323,7 +344,8 @@ class FixedEnhancedWakeWordDetector:
                 
                 probabilities = torch.softmax(output, dim=1)
                 wake_word_prob = probabilities[0][1].item()
-            
+                print(f"Wake word probability: {wake_word_prob:.4f}")
+                print()
             inference_time = (time.time() - start_time) * 1000
             self.inference_times.append(inference_time)
             
@@ -383,6 +405,8 @@ class FixedEnhancedWakeWordDetector:
                         # Single inference (no batching for now to simplify)
                         probability = self.detect_wake_word_single(mfcc_features)
                         smoothed_prob = self.smooth_detection(probability)
+
+                        print("Probablility confidence  {smoothed_prob:.3f}")
                         
                         # Check for detection
                         current_time = time.time()
@@ -483,8 +507,12 @@ def main():
     print("This version uses more lenient filtering to avoid missing wake words")
     
     # More lenient default settings
+    # Get the model path relative to this script's directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(script_dir, '..', 'tiny_wake_word_optimized.pt')
+
     detector = FixedEnhancedWakeWordDetector(
-        model_path='tiny_wake_word_optimized.pt',
+        model_path=model_path,
         detection_threshold=0.65,  # Slightly lower threshold
         smoothing_window=3,        # Shorter smoothing for faster response
         power_save_mode=True,
@@ -495,7 +523,7 @@ def main():
     print("\nPress 'd' during detection to disable all filtering if wake word isn't detected")
     
     try:
-        detector.start_detection()
+        detector.start_detection() 
     except KeyboardInterrupt:
         print("\nShutting down...")
     finally:
