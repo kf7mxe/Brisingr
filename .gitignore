@@ -28,7 +28,7 @@ split_common_voice/
 *.cxx
 /local.properties
 *.jar
-
+*.sh
 
 # Default ignored files
 /shelf/
