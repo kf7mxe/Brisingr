@@ -26,7 +26,10 @@ import com.lightningkite.services.notifications.*
 import com.lightningkite.services.notifications.fcm.FcmNotificationClient
 import com.kf7mxe.brisingr.UserAuth.RoleCache.userRole
 import com.kf7mxe.brisingr.data.AppReleaseEndpoints
+import com.kf7mxe.brisingr.data.ConversationEndpoints
 import com.kf7mxe.brisingr.data.FcmTokenEndpoints
+import com.kf7mxe.brisingr.data.MessageEndpoints
+import com.kf7mxe.brisingr.data.SkillSettingsEndpoints
 import com.kf7mxe.brisingr.data.UserEndpoints
 
 object Server: ServerBuilder() {
@@ -77,6 +80,9 @@ object Server: ServerBuilder() {
     val users = path.path("users") module UserEndpoints
     val authEndpoints = path.path("auth") module UserAuth
     val fcmTokens = path.path("fcmTokens") module FcmTokenEndpoints
+    val conversations = path.path("conversations") module ConversationEndpoints
+    val messages = path.path("messages") module MessageEndpoints
+    val skillSettings = path.path("skill-settings") module SkillSettingsEndpoints
 
     val multiplex = path.path("multiplex") bind MultiplexWebSocketHandler()
     val base = path bind QueryParamWebSocketHandler()

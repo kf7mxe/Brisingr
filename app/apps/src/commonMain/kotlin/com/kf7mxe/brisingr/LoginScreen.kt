@@ -25,6 +25,7 @@ import com.lightningkite.services.files.*
 import com.kf7mxe.brisingr.sdk.currentSession
 import com.kf7mxe.brisingr.sdk.selectedApi
 import com.kf7mxe.brisingr.sdk.sessionToken
+import com.lightningkite.kiteui.requestFiles
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.launch
 
@@ -32,6 +33,7 @@ import kotlinx.coroutines.launch
 class LoginPage : Page, UseFullPage {
     override val title: Reactive<String> get() = Constant("Home")
     override fun ViewWriter.render() {
+
 
         val authUI = remember {
             val api = selectedApi().api
@@ -67,6 +69,12 @@ class LoginPage : Page, UseFullPage {
                             render()
                         }
                     }
+                }
+            }
+            button {
+                text("test")
+                onClick {
+                    context.requestFiles()
                 }
             }
         }

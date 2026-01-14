@@ -8,8 +8,6 @@ import com.lightningkite.lightningserver.sessions.*
 import com.lightningkite.services.data.*
 import com.lightningkite.services.database.*
 import com.lightningkite.services.files.*
-import com.lightningtime.TaskState
-import com.lightningtime.TaskType
 import kotlin.uuid.Uuid
 
 fun Icon.resize(size: Dimension) = copy(width = size, height = size)
@@ -732,28 +730,3 @@ val Icon.Companion.chartView: Icon
         viewBoxHeight = 960,
         pathDatas = listOf("M120-200v-80l200-200 160 160 280-280 56 57-336 335-160-160-144 144-56-56Zm0-320v-80l200-200 160 160 280-280 56 57-336 335-160-160-144 144-56-56Z")
     )
-
-val TaskState.icon get() = when(this) {
-    TaskState.Hold -> Icon.hold
-    TaskState.Cancelled -> Icon.blocked
-    TaskState.Ready -> Icon.ready
-    TaskState.Active -> Icon.active
-    TaskState.PullRequest -> Icon.review
-    TaskState.Review -> Icon.review
-    TaskState.HigherReview -> Icon.review
-    TaskState.FinalReview -> Icon.review
-    TaskState.Testing -> Icon.test
-    TaskState.Approved -> Icon.done
-    TaskState.PartialDelivery1 -> Icon.packaging
-    TaskState.PartialDelivery2 -> Icon.packaging
-    TaskState.Delivered -> Icon.shipped
-}
-
-val TaskType.icon: Icon get() = when(this) {
-    TaskType.Bug -> Icon.warning
-    TaskType.ChangeRequest -> Icon.changeOrder
-    TaskType.Feature -> Icon.feature
-    TaskType.Support -> Icon.customerSupport
-    TaskType.Maintenance -> Icon.maintenance
-    TaskType.Administrative -> Icon.paperwork
-}

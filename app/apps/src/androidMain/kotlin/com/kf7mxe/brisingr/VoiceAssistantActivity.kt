@@ -25,7 +25,7 @@ class VoiceAssistantActivity : KiteUiActivity() {
     }
 
     override val theme: ReactiveContext.() -> Theme
-        get() = { appTheme() }
+        get() = { appTheme()() }
 
     override val mainNavigator: PageNavigator get() = main
 

@@ -22,11 +22,23 @@ object WakeWordState {
     /** Error message if something went wrong, null if no error */
     val errorMessage = Signal<String?>(null)
     
-    /** Detection threshold (default 0.65) */
+    /** Detection threshold (default 0.65, lower = more sensitive, higher = more strict) */
     val threshold = Signal(0.65f)
-    
-    /** Cooldown between detections in seconds */
+
+    /** Cooldown between detections in seconds (prevents repeated triggers) */
     val cooldownSeconds = Signal(2.0f)
+
+    /** Minimum volume threshold for processing (0.001 default) */
+    val minVolumeThreshold = Signal(0.001f)
+
+    /** Processing interval in milliseconds (lower = more CPU, higher = less responsive) */
+    val processingIntervalMs = Signal(50L)
+
+    /** Enable adaptive processing (slower when quiet, faster when detecting) */
+    val adaptiveProcessing = Signal(true)
+
+    /** Debug mode - logs additional information (set to true for MFCC debugging) */
+    val debugMode = Signal(true)
 }
 
 /**

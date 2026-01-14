@@ -22,7 +22,9 @@ import com.lightningkite.kiteui.models.OuterSemantic
 import com.lightningkite.kiteui.models.Paint
 import com.lightningkite.kiteui.models.PopoverSemantic
 import com.lightningkite.kiteui.models.SelectedSemantic
+import com.lightningkite.kiteui.models.Semantic
 import com.lightningkite.kiteui.models.Theme
+import com.lightningkite.kiteui.models.ThemeAndBack
 import com.lightningkite.kiteui.models.UnselectedSemantic
 import com.lightningkite.kiteui.models.dp
 import com.lightningkite.kiteui.models.lighten
@@ -30,10 +32,10 @@ import com.lightningkite.kiteui.models.px
 import com.lightningkite.kiteui.models.rem
 import kotlin.collections.get
 
-fun Theme.Companion.brisingrLight(primary: Color?): Theme = run {
+fun Theme.Companion.brisingrLight(): Theme = run {
     val back = Color(red = 229f / 255f, green = 229f / 255f, blue = 234f / 255f, alpha = 1f)
     val defaultColor = Color(red = 0 / 255f, green = 122 / 255f, blue = 255 / 255f, alpha = 1f)
-    val highlight = primary ?: defaultColor
+    val highlight = defaultColor
     val separator = back.darken(0.1f)
     fun Paint.backInvert() = if (this == Color.white) back else Color.white
     Theme(
@@ -56,7 +58,7 @@ fun Theme.Companion.brisingrLight(primary: Color?): Theme = run {
                 if(it.background != Color.white)
                     it.withBack(background = it.background.backInvert(), foreground = Color.black)
                 else
-                    it.withBack(outlineWidth = 1.px)
+                    it.withBack(outlineWidth = 1.px, cornerRadii = CornerRadii.Constant(1.rem))
             },
             FieldSemantic to {
                 it.withBack(
@@ -107,4 +109,38 @@ fun Theme.Companion.brisingrLight(primary: Color?): Theme = run {
             },
         )
     )
+}
+
+
+fun Color.toHex(): Int {
+    val r = (red * 255).toInt()
+    val g = (green * 255).toInt()
+    val b = (blue * 255).toInt()
+    return (r shl 16) or (g shl 8) or b
+}
+
+
+fun Color.toHexString() = "#${toHex().toString(16).padStart(6,'0').uppercase()}"
+
+data object SelectedBackgroundSetToSpecificColor {
+    val internal = HashMap<Color, Semantic>()
+    operator fun get(color: Color) = internal.getOrPut(color) {
+        object : Semantic("selected-bg-${color.toHexString()}") {
+            override fun default(theme: Theme): ThemeAndBack {
+                val foreground =
+                    if (theme.background.closestColor().perceivedBrightness > 0.5f) Color.black else Color.white
+                return theme.copy(
+                    id = "selected-background-whisp-colored-${color.toInt()}",
+                    selected = {
+                        theme.copy(
+                            "selected-whisp-colored-${color.toInt()}",
+                            background = color,
+                            foreground = foreground,
+                            iconOverride = foreground,
+                        )
+                    }
+                ).withBack
+            }
+        }
+    }
 }

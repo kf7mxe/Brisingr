@@ -1,0 +1,5 @@
+# Ignore config file containing session token
+config
+
+# Keep the example
+!config.example

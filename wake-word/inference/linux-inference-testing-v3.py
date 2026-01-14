@@ -303,11 +303,14 @@ class FixedEnhancedWakeWordDetector:
                 fmax=8000
             )
 
+            # mfccs shape is (n_mfcc, frames), need to transpose for correct stats
+            mfccs_T = mfccs.T  # Now shape is (frames, n_mfcc)
             mfcc_min = mfccs.min()
             mfcc_max = mfccs.max()
             mfcc_mean = mfccs.mean()
-            first_frame = mfccs[0][:5]
-            
+            # Get first frame's coefficients c0-c4 (first row of transposed matrix)
+            first_frame = mfccs_T[0][:5] if len(mfccs_T) > 0 else []
+            num_frames = mfccs.shape[1]  # Number of frames is second dimension
 
             audio_min = audio_signal.min()
             audio_max = audio_signal.max()
@@ -317,7 +320,7 @@ class FixedEnhancedWakeWordDetector:
             print("=== MFCC Debug (Python/Linux) ===")
             print(f"Timestamp: {timeFormated}")
             print(f"Audio: min={audio_min:.4f}, max={audio_max:.4f}, rms={audio_rms:.4f}")
-            print(f"MFCC: frames={len(mfccs)}, min={mfcc_min:.2f}, max={mfcc_max:.2f}, mean={mfcc_mean:.2f}")
+            print(f"MFCC: frames={num_frames}, min={mfcc_min:.2f}, max={mfcc_max:.2f}, mean={mfcc_mean:.2f}")
             print(f"MFCC first frame (c0-c4): {[f'{x:.2f}' for x in first_frame]}")
 
 
