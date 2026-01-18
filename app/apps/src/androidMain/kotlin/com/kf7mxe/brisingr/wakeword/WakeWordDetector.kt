@@ -21,6 +21,111 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 
 /**
+ * Battery usage profiler for wake word detection.
+ * Tracks time spent in each processing phase to identify power consumption hotspots.
+ */
+class BatteryProfiler {
+    private val timings = mutableMapOf<String, Long>()
+    private val counts = mutableMapOf<String, Int>()
+    private var lastReportTime = System.currentTimeMillis()
+    private val reportIntervalMs = 10000L  // Report every 10 seconds
+
+    private var phaseStartTime = 0L
+    private var currentPhase = ""
+
+    fun startPhase(phase: String) {
+        if (currentPhase.isNotEmpty()) {
+            endPhase()
+        }
+        currentPhase = phase
+        phaseStartTime = System.nanoTime()
+    }
+
+    fun endPhase() {
+        if (currentPhase.isEmpty()) return
+        val elapsed = System.nanoTime() - phaseStartTime
+        timings[currentPhase] = (timings[currentPhase] ?: 0L) + elapsed
+        counts[currentPhase] = (counts[currentPhase] ?: 0) + 1
+        currentPhase = ""
+    }
+
+    fun maybeReport(forceReport: Boolean = false): String? {
+        val now = System.currentTimeMillis()
+        if (!forceReport && now - lastReportTime < reportIntervalMs) {
+            return null
+        }
+        lastReportTime = now
+
+        if (timings.isEmpty()) return null
+
+        val sb = StringBuilder()
+        sb.appendLine("=== BATTERY PROFILER REPORT ===")
+
+        // Calculate total time
+        val totalNs = timings.values.sum()
+        val totalMs = totalNs / 1_000_000.0
+
+        // Sort by time spent (descending)
+        val sorted = timings.entries.sortedByDescending { it.value }
+
+        sb.appendLine("Total processing time: ${"%.2f".format(totalMs)} ms")
+        sb.appendLine("")
+        sb.appendLine("Phase breakdown:")
+
+        for ((phase, ns) in sorted) {
+            val ms = ns / 1_000_000.0
+            val percent = (ns.toDouble() / totalNs) * 100
+            val count = counts[phase] ?: 0
+            val avgMs = if (count > 0) ms / count else 0.0
+            sb.appendLine("  $phase:")
+            sb.appendLine("    Total: ${"%.2f".format(ms)} ms (${"%.1f".format(percent)}%)")
+            sb.appendLine("    Count: $count calls")
+            sb.appendLine("    Avg: ${"%.3f".format(avgMs)} ms/call")
+        }
+
+        sb.appendLine("")
+        sb.appendLine("=== BATTERY OPTIMIZATION HINTS ===")
+
+        // Provide hints based on profiling data
+        val audioReadPct = timings["audio_read"]?.let { it.toDouble() / totalNs * 100 } ?: 0.0
+        val mfccPct = timings["mfcc_extraction"]?.let { it.toDouble() / totalNs * 100 } ?: 0.0
+        val inferencePct = timings["inference"]?.let { it.toDouble() / totalNs * 100 } ?: 0.0
+        val fftPct = timings["fft"]?.let { it.toDouble() / totalNs * 100 } ?: 0.0
+
+        if (audioReadPct > 40) {
+            sb.appendLine("- AUDIO READ is ${audioReadPct.toInt()}% of time")
+            sb.appendLine("  Consider: Increase buffer size to reduce read frequency")
+        }
+        if (mfccPct > 30) {
+            sb.appendLine("- MFCC EXTRACTION is ${mfccPct.toInt()}% of time")
+            sb.appendLine("  Consider: Cache mel filterbank, reduce n_fft, use stride")
+        }
+        if (fftPct > 25) {
+            sb.appendLine("- FFT is ${fftPct.toInt()}% of time")
+            sb.appendLine("  Consider: Use smaller FFT size or process fewer frames")
+        }
+        if (inferencePct > 30) {
+            sb.appendLine("- INFERENCE is ${inferencePct.toInt()}% of time")
+            sb.appendLine("  Consider: Use smaller model, enable XNNPACK, INT8 quantization")
+        }
+
+        sb.appendLine("=== END BATTERY REPORT ===")
+
+        // Clear for next period
+        timings.clear()
+        counts.clear()
+
+        return sb.toString()
+    }
+
+    fun reset() {
+        timings.clear()
+        counts.clear()
+        lastReportTime = System.currentTimeMillis()
+    }
+}
+
+/**
  * Wake word detection engine for Android.
  * Handles audio recording, MFCC extraction, and ExecuTorch inference.
  * 
@@ -35,9 +140,13 @@ class WakeWordDetector(private val context: Context) {
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_FLOAT
         private const val BUFFER_SECONDS = 1
         private const val BUFFER_SIZE = SAMPLE_RATE * BUFFER_SECONDS
-        // Use smaller overlap for lower latency (1600 samples = 100ms at 16kHz)
-        // Linux uses chunk_size=1024 (~64ms), but we need slightly more for stable processing
-        private const val OVERLAP_SIZE = 1600
+        // BATTERY OPTIMIZED: Use larger overlap (3200 samples = 200ms at 16kHz)
+        // This halves processing frequency compared to 1600 (100ms)
+        // Trade-off: ~100ms additional latency for ~50% less CPU usage
+        private const val OVERLAP_SIZE = 3200
+
+        // Consecutive quiet reads before skipping full MFCC/inference
+        private const val QUIET_THRESHOLD_COUNT = 3
 
         // MFCC settings (matching Python/librosa implementation)
         private const val NUM_MFCC = 13
@@ -80,6 +189,12 @@ class WakeWordDetector(private val context: Context) {
 
     private var lastDetectionTime = 0L
     private var consecutiveLowProbability = 0
+
+    // Battery optimization: track consecutive quiet reads to skip MFCC
+    private var consecutiveQuietReads = 0
+
+    // Battery profiler for identifying power consumption hotspots
+    private val batteryProfiler = BatteryProfiler()
     
     /**
      * Load the ExecuTorch model from assets.
@@ -366,29 +481,49 @@ class WakeWordDetector(private val context: Context) {
     private fun processAudioBuffer() {
         val record = audioRecord ?: return
 
-        // Read new audio chunk
+        // Profile: Audio reading
+        batteryProfiler.startPhase("audio_read")
         val partBuffer = FloatArray(OVERLAP_SIZE)
         val readResult = record.read(partBuffer, 0, OVERLAP_SIZE, AudioRecord.READ_BLOCKING)
+        batteryProfiler.endPhase()
 
         if (readResult < 0) return
 
-        // Shift buffer and add new samples
+        // Profile: Buffer management
+        batteryProfiler.startPhase("buffer_management")
         System.arraycopy(audioBuffer, OVERLAP_SIZE, audioBuffer, 0, BUFFER_SIZE - OVERLAP_SIZE)
         System.arraycopy(partBuffer, 0, audioBuffer, BUFFER_SIZE - OVERLAP_SIZE, OVERLAP_SIZE)
+        batteryProfiler.endPhase()
 
-        // Early exit for very quiet audio (saves CPU on FFT computation)
-        val rmsVolume = calculateRMS(partBuffer)  // Check only new samples for faster check
+        // Profile: Volume check (early exit optimization)
+        batteryProfiler.startPhase("volume_check")
+        val rmsVolume = calculateRMS(partBuffer)
         val minThreshold = WakeWordState.minVolumeThreshold.value
+        batteryProfiler.endPhase()
+
+        // BATTERY OPTIMIZATION: Track quiet periods and skip full processing
         if (rmsVolume < minThreshold * 0.5f) {
+            consecutiveQuietReads++
             WakeWordState.probability.value = 0f
+
             if (WakeWordState.debugMode.value) {
-                android.util.Log.d("WakeWord", "Volume too low: $rmsVolume < ${minThreshold * 0.5f}")
+                android.util.Log.d("WakeWord", "Volume too low: $rmsVolume < ${minThreshold * 0.5f} (quiet streak: $consecutiveQuietReads)")
+                // Report battery stats even when skipping (shows early exit savings)
+                batteryProfiler.maybeReport()?.let { report ->
+                    android.util.Log.d("WakeWordBattery", report)
+                }
             }
             return
         }
 
-        // Extract MFCC features
+        // Reset quiet counter when audio is detected
+        consecutiveQuietReads = 0
+
+        // Profile: MFCC extraction (typically most expensive)
+        batteryProfiler.startPhase("mfcc_extraction")
         val mfccFeatures = extractMFCC(audioBuffer)
+        batteryProfiler.endPhase()
+
         if (mfccFeatures == null) {
             if (WakeWordState.debugMode.value) {
                 android.util.Log.e("WakeWord", "MFCC extraction failed")
@@ -400,10 +535,13 @@ class WakeWordDetector(private val context: Context) {
             android.util.Log.d("WakeWord", "MFCC frames: ${mfccFeatures.size}, RMS: $rmsVolume")
         }
 
-        // Run inference
+        // Profile: Model inference
+        batteryProfiler.startPhase("inference")
         val probability = runInference(mfccFeatures)
+        batteryProfiler.endPhase()
 
-        // Smooth detection
+        // Profile: Post-processing
+        batteryProfiler.startPhase("post_processing")
         val smoothedProb = smoothDetection(probability)
         WakeWordState.probability.value = smoothedProb
 
@@ -413,6 +551,7 @@ class WakeWordDetector(private val context: Context) {
         } else {
             consecutiveLowProbability = 0
         }
+        batteryProfiler.endPhase()
 
         if (WakeWordState.debugMode.value && System.currentTimeMillis() % 500 < 100) {
             android.util.Log.d("WakeWord", "Prob: $probability, Smoothed: $smoothedProb")
@@ -420,6 +559,13 @@ class WakeWordDetector(private val context: Context) {
 
         // Check for detection
         checkDetection(smoothedProb)
+
+        // Report battery profiling stats periodically (in debug mode)
+        if (WakeWordState.debugMode.value) {
+            batteryProfiler.maybeReport()?.let { report ->
+                android.util.Log.d("WakeWordBattery", report)
+            }
+        }
     }
 
     /**

@@ -6,6 +6,9 @@ import kotlin.math.*
  * MFCC (Mel-Frequency Cepstral Coefficients) extractor.
  * Designed to match librosa.feature.mfcc() output as closely as possible.
  *
+ * OPTIMIZED VERSION: Uses pre-computed twiddle factors, float arithmetic,
+ * and reusable buffers to minimize allocations and CPU usage.
+ *
  * Key parameters matching linux-inference-testing-v3.py:
  * - n_fft = 512 (frame_length)
  * - hop_length = 160
@@ -25,16 +28,33 @@ class MFCCExtractor(
     private val hopLength: Int = 160,
     private val preemph: Float = 0.97f
 ) {
-    // Pre-compute expensive operations
+    // Pre-compute expensive operations (lazy initialization)
     private val melFilterbank: Array<FloatArray> by lazy { createMelFilterbank() }
     private val hannWindow: FloatArray by lazy { createHannWindow() }
     private val dctMatrix: Array<FloatArray> by lazy { createDCTMatrix() }
+
+    // Pre-computed FFT twiddle factors (cos/sin values) - MAJOR OPTIMIZATION
+    private val fftCosTable: FloatArray by lazy { createFFTCosTable() }
+    private val fftSinTable: FloatArray by lazy { createFFTSinTable() }
+
+    // Bit-reversal lookup table for FFT
+    private val bitRevTable: IntArray by lazy { createBitReversalTable() }
+
+    // Reusable buffers to avoid allocations in hot path
+    private val fftReal = FloatArray(nfft)
+    private val fftImag = FloatArray(nfft)
+    private val powerSpectrumBuffer = FloatArray(nfft / 2 + 1)
+    private val melEnergyBuffer = FloatArray(nFilt)
+    private val mfccBuffer = FloatArray(numCep)
 
     // Spectrum size (only need positive frequencies for real input)
     private val spectrumSize = nfft / 2 + 1
 
     // Debug flag - set to true once to log detailed intermediate values
     private var hasLoggedDebug = false
+
+    // Pre-computed log10 multiplier
+    private val log10Multiplier = (10.0 / ln(10.0)).toFloat()
 
     /**
      * Reset debug flag to allow logging again (for wav file tests).
@@ -44,58 +64,182 @@ class MFCCExtractor(
     }
 
     /**
+     * Create pre-computed cosine table for FFT twiddle factors.
+     * This eliminates repeated cos() calls during FFT.
+     */
+    private fun createFFTCosTable(): FloatArray {
+        val table = FloatArray(nfft)
+        for (i in 0 until nfft) {
+            table[i] = cos(-PI * i / (nfft / 2)).toFloat()
+        }
+        return table
+    }
+
+    /**
+     * Create pre-computed sine table for FFT twiddle factors.
+     */
+    private fun createFFTSinTable(): FloatArray {
+        val table = FloatArray(nfft)
+        for (i in 0 until nfft) {
+            table[i] = sin(-PI * i / (nfft / 2)).toFloat()
+        }
+        return table
+    }
+
+    /**
+     * Create bit-reversal lookup table for FFT.
+     */
+    private fun createBitReversalTable(): IntArray {
+        val bits = (ln(nfft.toDouble()) / ln(2.0)).toInt()
+        val table = IntArray(nfft)
+        for (i in 0 until nfft) {
+            var reversed = 0
+            var value = i
+            for (j in 0 until bits) {
+                reversed = (reversed shl 1) or (value and 1)
+                value = value shr 1
+            }
+            table[i] = reversed
+        }
+        return table
+    }
+
+    /**
      * Extract MFCC features from audio signal.
-     * Matches librosa.feature.mfcc() behavior.
+     * OPTIMIZED: Uses pre-computed tables, float arithmetic, and reusable buffers.
      */
     fun extractMFCC(signal: FloatArray): Array<FloatArray> {
-        // 1. Pre-emphasis filter (matches Python implementation)
+        // 1. Pre-emphasis filter (in-place style, but we need original for debug)
         val emphasized = preEmphasis(signal)
 
-        // 2. Frame the signal with center padding (librosa default)
-        val frames = frameSignal(emphasized)
+        // 2. Calculate number of frames with center padding
+        val padSize = nfft / 2
+        val paddedLength = signal.size + 2 * padSize
+        val numFrames = 1 + (paddedLength - nfft) / hopLength
 
-        if (frames.isEmpty()) {
+        if (numFrames <= 0) {
             return arrayOf(FloatArray(numCep))
         }
 
-        // 3. Apply Hamming window to each frame
-        val windowedFrames = applyWindow(frames)
+        // 3. Allocate output array
+        val mfccs = Array(numFrames) { FloatArray(numCep) }
 
-        // 4. Compute power spectrum via FFT
-        val powerSpectrum = computePowerSpectrum(windowedFrames)
-
-        // 5. Apply Mel filterbank
-        val melEnergies = applyMelFilterbank(powerSpectrum)
-
-        // 6. Take log of mel energies using dB scale (10*log10) to match librosa
-        val logMelEnergies = melEnergies.map { frame ->
-            FloatArray(frame.size) { i ->
-                (10.0 * log10(max(frame[i], 1e-10f).toDouble())).toFloat()
-            }
+        // 4. Process each frame using optimized pipeline
+        for (frameIdx in 0 until numFrames) {
+            processFrameOptimized(emphasized, frameIdx, padSize, mfccs[frameIdx])
         }
 
-        // 7. Apply DCT to get MFCCs
-        val mfccs = logMelEnergies.map { frame ->
-            applyDCT(frame)
-        }.toTypedArray()
-
         // Debug logging for frame 0 - only log once to avoid spam
-        if (!hasLoggedDebug && frames.isNotEmpty()) {
+        if (!hasLoggedDebug && numFrames > 0) {
             hasLoggedDebug = true
-            android.util.Log.d("MFCCDebug", "=== MFCC Pipeline Debug (Frame 0) ===")
-            android.util.Log.d("MFCCDebug", "Input signal: length=${signal.size}, first 5: ${signal.take(5).map { "%.6f".format(it) }}")
-            android.util.Log.d("MFCCDebug", "After pre-emphasis: first 5: ${emphasized.take(5).map { "%.6f".format(it) }}")
-            android.util.Log.d("MFCCDebug", "Frame 0 (first 10): ${frames[0].take(10).map { "%.6f".format(it) }}")
-            android.util.Log.d("MFCCDebug", "Windowed frame 0 (first 10): ${windowedFrames[0].take(10).map { "%.6f".format(it) }}")
-            android.util.Log.d("MFCCDebug", "Power spectrum frame 0 (bins 0-9): ${powerSpectrum[0].take(10).map { "%.6f".format(it) }}")
-            android.util.Log.d("MFCCDebug", "Mel energy frame 0 (filters 0-4): ${melEnergies[0].take(5).map { "%.8f".format(it) }}")
-            android.util.Log.d("MFCCDebug", "Log mel frame 0 (filters 0-4): ${logMelEnergies[0].take(5).map { "%.2f".format(it) }}")
+            android.util.Log.d("MFCCDebug", "=== MFCC Pipeline Debug (Optimized) ===")
+            android.util.Log.d("MFCCDebug", "Input signal: length=${signal.size}")
+            android.util.Log.d("MFCCDebug", "Num frames: $numFrames")
             android.util.Log.d("MFCCDebug", "MFCC frame 0: ${mfccs[0].map { "%.2f".format(it) }}")
-            android.util.Log.d("MFCCDebug", "=== Expected Python values (positive_16k.wav) ===")
-            android.util.Log.d("MFCCDebug", "MFCC frame 0: [-259.49, 4.41, -21.95, -3.47, 1.47, -2.33, -8.70, 1.74, 7.13, 2.11, -4.30, -2.62, 0.07]")
         }
 
         return mfccs
+    }
+
+    /**
+     * Process a single frame through the entire MFCC pipeline.
+     * OPTIMIZED: Reuses buffers, uses pre-computed tables, avoids allocations.
+     */
+    private fun processFrameOptimized(emphasized: FloatArray, frameIdx: Int, padSize: Int, output: FloatArray) {
+        val frameStart = frameIdx * hopLength - padSize
+
+        // 1. Extract frame with windowing (combined for efficiency)
+        for (i in 0 until nfft) {
+            val signalIdx = frameStart + i
+            val sample = when {
+                signalIdx < 0 -> 0f
+                signalIdx >= emphasized.size -> 0f
+                else -> emphasized[signalIdx]
+            }
+            // Apply Hann window inline
+            fftReal[i] = sample * hannWindow[i]
+            fftImag[i] = 0f
+        }
+
+        // 2. Compute FFT in-place using pre-computed twiddle factors
+        fftInPlaceOptimized()
+
+        // 3. Compute power spectrum directly into buffer
+        for (k in 0 until spectrumSize) {
+            val re = fftReal[k]
+            val im = fftImag[k]
+            powerSpectrumBuffer[k] = re * re + im * im
+        }
+
+        // 4. Apply mel filterbank directly into buffer
+        for (i in 0 until nFilt) {
+            var energy = 0f
+            val filter = melFilterbank[i]
+            for (k in 0 until spectrumSize) {
+                energy += powerSpectrumBuffer[k] * filter[k]
+            }
+            // Apply log (dB scale) inline: 10 * log10(x) = 10/ln(10) * ln(x)
+            melEnergyBuffer[i] = log10Multiplier * ln(max(energy, 1e-10f))
+        }
+
+        // 5. Apply DCT to get MFCCs
+        for (k in 0 until numCep) {
+            var sum = 0f
+            val dctRow = dctMatrix[k]
+            for (n in 0 until nFilt) {
+                sum += dctRow[n] * melEnergyBuffer[n]
+            }
+            output[k] = sum
+        }
+    }
+
+    /**
+     * Optimized in-place FFT using pre-computed twiddle factors.
+     * Uses float arithmetic throughout for speed on mobile.
+     */
+    private fun fftInPlaceOptimized() {
+        // Bit-reversal permutation using lookup table
+        for (i in 0 until nfft) {
+            val j = bitRevTable[i]
+            if (i < j) {
+                // Swap
+                var temp = fftReal[i]
+                fftReal[i] = fftReal[j]
+                fftReal[j] = temp
+                temp = fftImag[i]
+                fftImag[i] = fftImag[j]
+                fftImag[j] = temp
+            }
+        }
+
+        // Cooley-Tukey FFT with pre-computed twiddle factors
+        var step = 1
+        var twiddleStep = nfft / 2
+        while (step < nfft) {
+            val halfStep = step
+            step *= 2
+
+            for (k in 0 until halfStep) {
+                val twiddleIdx = k * twiddleStep
+                val wr = fftCosTable[twiddleIdx]
+                val wi = fftSinTable[twiddleIdx]
+
+                var i = k
+                while (i < nfft) {
+                    val iPlus = i + halfStep
+                    val tr = wr * fftReal[iPlus] - wi * fftImag[iPlus]
+                    val ti = wr * fftImag[iPlus] + wi * fftReal[iPlus]
+
+                    fftReal[iPlus] = fftReal[i] - tr
+                    fftImag[iPlus] = fftImag[i] - ti
+                    fftReal[i] = fftReal[i] + tr
+                    fftImag[i] = fftImag[i] + ti
+
+                    i += step
+                }
+            }
+            twiddleStep /= 2
+        }
     }
 
     /**
@@ -114,149 +258,12 @@ class MFCCExtractor(
     }
 
     /**
-     * Frame the signal with center padding to match librosa's center=True behavior.
-     * Uses constant (zero) padding at edges to match librosa's default pad_mode='constant'.
-     */
-    private fun frameSignal(signal: FloatArray): List<FloatArray> {
-        if (signal.isEmpty()) return emptyList()
-
-        // Librosa center=True pads by n_fft//2 on each side
-        val padSize = nfft / 2
-        val paddedLength = signal.size + 2 * padSize
-        val paddedSignal = FloatArray(paddedLength)  // FloatArray is initialized to zeros
-
-        // Copy original signal to center (padding at start and end is already zeros)
-        System.arraycopy(signal, 0, paddedSignal, padSize, signal.size)
-
-        // Calculate number of frames
-        val numFrames = 1 + (paddedSignal.size - nfft) / hopLength
-
-        val frames = ArrayList<FloatArray>(numFrames)
-        for (i in 0 until numFrames) {
-            val start = i * hopLength
-            if (start + nfft <= paddedSignal.size) {
-                val frame = FloatArray(nfft)
-                System.arraycopy(paddedSignal, start, frame, 0, nfft)
-                frames.add(frame)
-            }
-        }
-
-        return frames
-    }
-
-    /**
      * Create Hann window to match librosa's default.
      * Note: librosa uses periodic Hann window (fftbins=True), which divides by n, not n-1.
      */
     private fun createHannWindow(): FloatArray {
         return FloatArray(nfft) { n ->
             (0.5 - 0.5 * cos(2.0 * PI * n / nfft)).toFloat()
-        }
-    }
-
-    /**
-     * Apply Hann window to frames (matches librosa default).
-     */
-    private fun applyWindow(frames: List<FloatArray>): List<FloatArray> {
-        return frames.map { frame ->
-            FloatArray(frame.size) { i ->
-                frame[i] * hannWindow[i]
-            }
-        }
-    }
-
-    /**
-     * Compute power spectrum using real-valued FFT.
-     * Returns magnitude squared for each positive frequency bin.
-     * Note: Don't divide by nfft - librosa doesn't do this.
-     */
-    private fun computePowerSpectrum(frames: List<FloatArray>): List<FloatArray> {
-        return frames.map { frame ->
-            // Compute real FFT
-            val (real, imag) = realFFT(frame)
-
-            // Compute power spectrum: |X[k]|^2 (no division by nfft)
-            FloatArray(spectrumSize) { k ->
-                (real[k] * real[k] + imag[k] * imag[k]).toFloat()
-            }
-        }
-    }
-
-    /**
-     * Compute FFT of real-valued input using Cooley-Tukey algorithm.
-     * Returns (real, imaginary) arrays for positive frequencies only.
-     *
-     * O(n log n) complexity - much faster than DFT for large n.
-     */
-    private fun realFFT(input: FloatArray): Pair<DoubleArray, DoubleArray> {
-        // Copy input to complex arrays (imaginary part is 0 for real input)
-        val real = DoubleArray(nfft) { if (it < input.size) input[it].toDouble() else 0.0 }
-        val imag = DoubleArray(nfft) { 0.0 }
-
-        // In-place Cooley-Tukey FFT
-        fftInPlace(real, imag)
-
-        // Return only positive frequencies (0 to N/2)
-        return Pair(
-            real.sliceArray(0 until spectrumSize),
-            imag.sliceArray(0 until spectrumSize)
-        )
-    }
-
-    /**
-     * In-place Cooley-Tukey FFT algorithm.
-     * Requires input size to be a power of 2.
-     */
-    private fun fftInPlace(real: DoubleArray, imag: DoubleArray) {
-        val n = real.size
-
-        // Bit-reversal permutation
-        var j = 0
-        for (i in 0 until n - 1) {
-            if (i < j) {
-                // Swap real[i] and real[j]
-                var temp = real[i]
-                real[i] = real[j]
-                real[j] = temp
-                // Swap imag[i] and imag[j]
-                temp = imag[i]
-                imag[i] = imag[j]
-                imag[j] = temp
-            }
-            var k = n / 2
-            while (k <= j) {
-                j -= k
-                k /= 2
-            }
-            j += k
-        }
-
-        // Cooley-Tukey iterative FFT
-        var step = 1
-        while (step < n) {
-            val halfStep = step
-            step *= 2
-            val angleStep = -PI / halfStep
-
-            for (k in 0 until halfStep) {
-                val angle = k * angleStep
-                val wr = cos(angle)
-                val wi = sin(angle)
-
-                var i = k
-                while (i < n) {
-                    val iPlus = i + halfStep
-                    val tr = wr * real[iPlus] - wi * imag[iPlus]
-                    val ti = wr * imag[iPlus] + wi * real[iPlus]
-
-                    real[iPlus] = real[i] - tr
-                    imag[iPlus] = imag[i] - ti
-                    real[i] += tr
-                    imag[i] += ti
-
-                    i += step
-                }
-            }
         }
     }
 
